@@ -1,0 +1,2 @@
+<?php
+include("exploit.phar");
