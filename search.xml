@@ -12,6 +12,14 @@
       
       
       
+        <tags>
+            
+            <tag> CTF </tag>
+            
+            <tag> SECCON </tag>
+            
+        </tags>
+      
     </entry>
     
     
@@ -133,6 +141,16 @@
         <content type="html"><![CDATA[<p>老MacBook 12（2015）得用起来啊</p><p>重装了一遍macOS 11 Big Sur。其实有考虑过换低版本或者Linux。但前者软件兼容性不好，后者硬件兼容性太差。索性到底吧，还能吃上Apple生态红利。</p><h1 id="0x00-Homebrew-MacPorts"><a href="#0x00-Homebrew-MacPorts" class="headerlink" title="0x00 Homebrew&#x2F;MacPorts"></a>0x00 Homebrew&#x2F;MacPorts</h1><p>官网一句话，但实际上Homebrew对macOS 11的支持已经是tier 3，大部分软件都装不上。换MacPorts。这个大多数软件包都是编译安装。</p><h1 id="0x01-Docker"><a href="#0x01-Docker" class="headerlink" title="0x01 Docker"></a>0x01 Docker</h1><p>兼容macOS 11 Big Sur的最新版本：<br><a href="https://desktop.docker.com/mac/main/amd64/124339/Docker.dmg">intel</a><br><a href="https://desktop.docker.com/mac/main/arm64/124339/Docker.dmg">apple silicon</a></p><link rel="stylesheet" href="/css/spoiler.css" type="text/css"><script src="/js/spoiler.js" type="text/javascript" async></script>]]></content>
       
       
+      
+        <tags>
+            
+            <tag> 折腾 </tag>
+            
+            <tag> Docker </tag>
+            
+            <tag> 服务器 </tag>
+            
+        </tags>
       
     </entry>
     
@@ -266,6 +284,8 @@
       
       
         <tags>
+            
+            <tag> 折腾 </tag>
             
             <tag> KVM </tag>
             
