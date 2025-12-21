@@ -4,6 +4,29 @@
   
     
     <entry>
+      <title>安卓微信取证学习</title>
+      <link href="/2025/12/21/%E5%AE%89%E5%8D%93%E5%BE%AE%E4%BF%A1%E5%8F%96%E8%AF%81%E5%AD%A6%E4%B9%A0/"/>
+      <url>/2025/12/21/%E5%AE%89%E5%8D%93%E5%BE%AE%E4%BF%A1%E5%8F%96%E8%AF%81%E5%AD%A6%E4%B9%A0/</url>
+      
+        <content type="html"><![CDATA[<blockquote><p>你的意思是，安卓微信几年都没改加密算法？</p></blockquote><h1 id="直接端上来吧！"><a href="#直接端上来吧！" class="headerlink" title="直接端上来吧！"></a>直接端上来吧！</h1><p>当前安卓端微信（8.0.66）依然采用<strong>sqlcipher v4</strong>加密数据库。加密数据库文件名<strong>EnMicroMsg.db</strong>，root之后可以pull出来，不过要怎么解密呢？</p><p><strong>只需要<code>uin</code>和<code>imei</code>即可</strong>。</p><h3 id="1-获取uin"><a href="#1-获取uin" class="headerlink" title="1. 获取uin"></a>1. 获取uin</h3><p>uin &#x3D; user information，每个微信号对应一个唯一的uin。uin可以直接从<code>prefs.xml</code>配置文件读取。经过测试，该配置文件可能出现在不同路径，应该与<code>手机登陆</code>、<code>平板手机同时登录</code>相关。</p><p>优先尝试这个路径(手机登陆)</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/data/data/com.tencent.mm/MicroMsg/shared_prefs/system_config_prefs.xml</span><br></pre></td></tr></table></figure><p>如果上面文件不存在，尝试这个(手机平板同时登陆)</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/data/data/com.tencent.mm/shared_prefs/auth_info_key_prefs.xml</span><br></pre></td></tr></table></figure><p>两个文件虽然文件名不同，但结构一致，示例如下(已隐去隐私数据)：</p><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=&#x27;1.0&#x27; encoding=&#x27;utf-8&#x27; standalone=&#x27;yes&#x27; ?&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">map</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">boolean</span> <span class="attr">name</span>=<span class="string">&quot;auth_info_prefs_use_new_ecdh&quot;</span> <span class="attr">value</span>=<span class="string">&quot;true&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">int</span> <span class="attr">name</span>=<span class="string">&quot;_auth_uin&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0987654321&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">boolean</span> <span class="attr">name</span>=<span class="string">&quot;key_auth_info_prefs_created&quot;</span> <span class="attr">value</span>=<span class="string">&quot;true&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">int</span> <span class="attr">name</span>=<span class="string">&quot;key_auth_update_version&quot;</span> <span class="attr">value</span>=<span class="string">&quot;67****592&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">string</span> <span class="attr">name</span>=<span class="string">&quot;server_id&quot;</span>&gt;</span>03******************3300<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">string</span> <span class="attr">name</span>=<span class="string">&quot;_auth_key&quot;</span>&gt;</span>0a240************(无害化处理)************6da09<span class="tag">&lt;/<span class="name">string</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">map</span>&gt;</span></span><br></pre></td></tr></table></figure><p>关键就是提取<code>_auth_uin</code>的<code>value</code>，是一个十位的正数或负数。这里以<code>0987654321</code>为例，记为<code>uin</code>。</p><h2 id="2-提取imei"><a href="#2-提取imei" class="headerlink" title="2. 提取imei"></a>2. 提取imei</h2><p>IMEI（国际移动设备识别码），有很多获取方式：</p><ul><li>拨号<code>*#06#</code></li><li>设置 - 关于本机</li><li>包装盒 - 入网许可</li></ul><p>需要注意，多卡设备往往会有多个IMEI，而且微信不一定真的能获取到IMEI，所以<strong>请优先采用以下方法，直接读取微信缓存的IMEI值</strong>：</p><p>尝试提取<code>/data/data/com.tencent.mm/files/KeyInfo.bin</code>，参考其他师傅博客可知，该文件内是RC4流加密的IMEI，密钥为 <code>_wEcHAT_</code> 。那好，厨子一拖就出来了</p><p><img src="/2025/12/21/%E5%AE%89%E5%8D%93%E5%BE%AE%E4%BF%A1%E5%8F%96%E8%AF%81%E5%AD%A6%E4%B9%A0/IMEI.png" alt="厨子"></p><p>结果发现，微信实际上使用一个占位符，<code>1234567890ABCDEF</code> 。推测高版本安卓限制，导致用户应用无法读取IMEI，恰巧微信也没改它的加密算法。</p><p>所以没必要真去提取IMEI，优先尝试 <code>1234567890ABCDEF</code> 这个占位符。</p><h2 id="3-计算密钥"><a href="#3-计算密钥" class="headerlink" title="3. 计算密钥"></a>3. 计算密钥</h2><p>微信使用的算法非常简单，有一些公式直接套：</p><ul><li><p>数据库路径</p>  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;/data/data/com.tencent.mm/MicroMsg/&quot;</span> + md5(<span class="string">&quot;mm&quot;</span> + uin) + <span class="string">&quot;/EnMicroMsg.db&quot;</span></span><br></pre></td></tr></table></figure></li><li><p>数据库密钥</p> <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">md5(imei+uin)[:<span class="number">7</span>]</span><br></pre></td></tr></table></figure><p> 举个例子，如果<strong>uin</strong>为<code>-1145141919</code>，<strong>imei</strong>是<code>1234567890ABCDEF</code>，那么先拼接得到<code>1234567890ABCDEF-1145141919</code> 负号不要漏下），然后进行一次<strong>md5</strong>计算，得到<code>103208bd42aef57359c7c901ba4552cc</code>，那么密钥就是<strong>前7️⃣位</strong>，即<code>103208b</code></p></li></ul><h2 id="4-解密数据库"><a href="#4-解密数据库" class="headerlink" title="4. 解密数据库"></a>4. 解密数据库</h2><p><strong>sqlcipher v4</strong>，具体配置是，<a href="https://github.com/WXjzcccc/ForensicsTool/blob/go-version/analyzers/database/decryptDatabaseAnalyzer.go">参考这个</a>：</p><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_pragma_cipher_compatibility=1</span><br></pre></td></tr></table></figure><p>啊，也就是默认配置，可以直接使用 <code>ForensicsTool</code> 一键解密：</p><p><img src="/2025/12/21/%E5%AE%89%E5%8D%93%E5%BE%AE%E4%BF%A1%E5%8F%96%E8%AF%81%E5%AD%A6%E4%B9%A0/ForensicsTool.png" alt="ForensicsTool"></p><p>拿到解密后的数据库，聊天记录在<code>message</code>表里：<br><img src="/2025/12/21/%E5%AE%89%E5%8D%93%E5%BE%AE%E4%BF%A1%E5%8F%96%E8%AF%81%E5%AD%A6%E4%B9%A0/message.png" alt="message"></p><p>参考文献：</p><ol><li><a href="https://www.cnblogs.com/WXjzc/p/18432038">https://www.cnblogs.com/WXjzc/p/18432038</a></li><li><a href="https://github.com/WXjzcccc/ForensicsTool/blob/go-version/analyzers/database/decryptDatabaseAnalyzer.go">ForensicsTool</a></li><li><a href="https://sarv.blog/posts/chatlog/">chatlog</a></li></ol><link rel="stylesheet" href="/css/spoiler.css" type="text/css"><script src="/js/spoiler.js" type="text/javascript" async></script>]]></content>
+      
+      
+      
+        <tags>
+            
+            <tag> CTF </tag>
+            
+            <tag> 安全 </tag>
+            
+            <tag> 微信 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>UDF提权学习笔记</title>
       <link href="/2025/12/17/UDF%E6%8F%90%E6%9D%83%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/"/>
       <url>/2025/12/17/UDF%E6%8F%90%E6%9D%83%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/</url>
@@ -361,13 +384,13 @@
       
         <tags>
             
-            <tag> 网络 </tag>
+            <tag> 安全 </tag>
             
             <tag> 学校 </tag>
             
             <tag> 渗透 </tag>
             
-            <tag> 安全 </tag>
+            <tag> 网络 </tag>
             
         </tags>
       
